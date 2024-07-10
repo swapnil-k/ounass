@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ounass Assignment - CSV Upload/Processor</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: url('/static/images/burj_khalifa.jpg');
+            background-size: cover;
+            background-position: center;
+            color: #000;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .navbar {
+            margin-bottom: 1rem;
+        }
+        .navbar-brand {
+            color: #000;
+        }
+        .navbar-brand:hover {
+            color: #333;
+        }
+        h1 {
+            font-size: 2.5rem;
+        }
+        .form-control-file {
+            color: #000;
+            background-color: #f8f9fa;
+            border: 1px solid #ced4da;
+        }
+        .btn-primary {
+            width: 100%;
+            background-color: #007bff;
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            width: 100%;
+            margin-top: 1rem;
+            background-color: #6c757d;
+            border: none;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .custom-heading {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+        }
+        footer {
+            background-color: rgba(255, 255, 255, 0.8);
+            width: 100%;
+            padding: 1rem;
+            text-align: center;
+            position: absolute;
+            bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar navbar-light">
+            <a class="navbar-brand btn btn-light btn-home" href="/">Home</a>
+        </nav>
+        <h1 class="custom-heading text-center">Ounass CRM Portal</h1>
+        <h1 class="my-4 text-center">Upload CSV File</h1>
+        <form action="/api/upload" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="file">Select CSV File:</label>
+                <input type="file" class="form-control-file" id="file" name="file" accept=".csv" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
+        </form>
+        <button class="btn btn-secondary" onclick="location.href='/api/list-files'">List Previous Files</button>
+    </div>
+    <footer>
+        <p>OUNASS DevOps Assignment</p>
+        <p>Completed by - Swapnil Khedekar</p>
+    </footer>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.querySelector('input[type="file"]').addEventListener('change', function() {
+            const file = this.files[0];
+            const allowedExtensions = /(\.csv)$/i;
+            if (!allowedExtensions.exec(file.name)) {
+                alert('Please select a CSV file.');
+                this.value = '';
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>

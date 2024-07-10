@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>List of Previous Files</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 2rem;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .btn-home {
+            margin-bottom: 1rem;
+        }
+        .file-link {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar navbar-light">
+            <a class="navbar-brand btn btn-light btn-home" href="/">Home</a>
+        </nav>
+        <h1 class="my-4 text-center">List of Previous Files</h1>
+        <ul class="list-group">
+            {% for file in files %}
+                <li class="list-group-item">
+                    <a href="/api/view-file/{{ file }}" class="file-link">{{ file }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
