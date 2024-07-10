@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name | quote }}
+  labels:
+    app: {{ .Values.name | quote }}
+    date: "{{ now | unixEpoch }}"
+    app.kubernetes.io/managed-by: helm
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.name | quote }}
+  replicas: {{ (.Values.replicaCount) | default 3 }} 
+  revisionHistoryLimit: {{ (.Values.revisionHistoryLimit) | default 3 }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        timestamp: {{ now | quote }}
+      labels:
+        app: {{ .Values.name | quote }}
+        version: v1
+    spec:
+      terminationGracePeriodSeconds: 30
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: {{ .Values.name | quote }}
+            topologyKey: "kubernetes.io/hostname"
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: beta.kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+              - key: node-role.kubernetes.io/spot-worker
+                operator: NotIn
+                values:
+                - "true"
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: "topology.kubernetes.io/zone"
+          whenUnsatisfiable: ScheduleAnyway
+          nodeTaintsPolicy: Honor
+          labelSelector:
+            matchLabels:
+              app: {{ .Values.name | quote }}
+      containers:
+      - name: ounass-nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: ounass-nginx
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        - name: shared-storage
+          mountPath: /usr/share/nginx/html
+      - name: {{ .Values.name | quote }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy | default "Always" | quote }}
+        securityContext:
+          privileged: false
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+            - ALL
+        ports:
+          - name: {{ .Values.name }}
+            containerPort: {{ ((.Values.service).targetport) | default 8000 }}
+            protocol: TCP
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.name }}
+              key: aws-access-key-id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.name }}
+              key: aws-secret-access-key
+        resources:
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
+        livenessProbe:
+          httpGet:
+            path: {{ $.Values.healthCheck.httpGet.path | quote }}
+            port: {{ $.Values.healthCheck.httpGet.port | default 8000 }}
+            initialDelaySeconds: {{ $.Values.healthCheck.livenessProbe.initialDelaySeconds | default 10 }}
+            periodSeconds: {{ $.Values.healthCheck.livenessProbe.periodSeconds | default 10 }}
+        readinessProbe:
+          httpGet:
+            path: {{ $.Values.healthCheck.httpGet.path | quote }}
+            port: {{ $.Values.healthCheck.httpGet.port | default 8000 }}
+          initialDelaySeconds: {{ $.Values.healthCheck.readinessProbe.initialDelaySeconds | default 10 }}
+          periodSeconds: {{ $.Values.healthCheck.readinessProbe.periodSeconds | default 10 }}
+        volumeMounts:
+        - name: ounass-nginx
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        - name: shared-storage
+          mountPath: /app/public
+      volumes:
+      - name: shared-storage
+        emptyDir: {}
+      - name: ounass-nginx
+        configMap:
+          name: ounass-nginx
+      imagePullSecrets:
+      - name: regcred
+

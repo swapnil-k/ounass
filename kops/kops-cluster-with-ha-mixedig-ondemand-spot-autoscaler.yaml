@@ -1,0 +1,219 @@
+apiVersion: kops.k8s.io/v1alpha2
+kind: Cluster
+metadata:
+  name: ounass.swapnilkhedekar.com
+spec:
+  api:
+    loadBalancer:
+      class: Network
+      type: Public
+#      type: Private #can be used with vpn setup
+  channel: stable
+  cloudProvider: aws
+  etcdClusters:
+  - cpuRequest: 200m
+    etcdMembers:
+    - encryptedVolume: true
+      instanceGroup: control-plane-ap-south-1a
+      name: control-plane-ap-south-1a
+    - encryptedVolume: true
+      instanceGroup: control-plane-ap-south-1b
+      name: control-plane-ap-south-1b
+    - encryptedVolume: true
+      instanceGroup: control-plane-ap-south-1c
+      name: control-plane-ap-south-1c
+    manager:
+      backupRetentionDays: 90
+    memoryRequest: 100Mi
+    name: main
+  - cpuRequest: 100m
+    etcdMembers:
+    - encryptedVolume: true
+      instanceGroup: control-plane-ap-south-1a
+      name: a
+    - encryptedVolume: true
+      instanceGroup: control-plane-ap-south-1b
+      name: b
+    - encryptedVolume: true
+      instanceGroup: control-plane-ap-south-1c
+      name: c
+    manager:
+      backupRetentionDays: 90
+    memoryRequest: 100Mi
+    name: events
+  iam:
+    allowContainerRegistry: true
+    legacy: false
+  kubelet:
+    anonymousAuth: false
+  kubernetesApiAccess:
+  - 0.0.0.0/0
+  - ::/0
+  kubernetesVersion: 1.29.6
+  networkCIDR: 10.10.0.0/16
+  networkID: vpc-067cafcfac66d9ba5
+  networking:
+    amazonvpc: {}
+  nonMasqueradeCIDR: 10.10.0.0/16
+  sshAccess:
+  - 10.10.0.0/16  #allowed within vpc
+  subnets:
+  - name: ap-south-1a
+    zone: ap-south-1a
+    cidr: 10.10.32.0/20
+    type: Private
+  - name: ap-south-1b
+    zone: ap-south-1b
+    cidr: 10.10.48.0/20
+    type: Private
+  - name: ap-south-1c
+    zone: ap-south-1c
+    cidr: 10.10.64.0/20
+    type: Private
+  - name: utility-ap-south-1a
+    zone: ap-south-1a
+    cidr: 10.10.80.0/20
+    type: Utility
+  - name: utility-ap-south-1b
+    zone: ap-south-1b
+    cidr: 10.10.96.0/20
+    type: Utility
+  - name: utility-ap-south-1c
+    zone: ap-south-1c
+    cidr: 10.10.112.0/20
+    type: Utility
+  topology:
+    dns:
+      type: None
+---
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  name: control-plane-ap-south-1a
+  labels:
+    kops.k8s.io/cluster: ounass.swapnilkhedekar.com
+spec:
+  role: Master
+  image: ami-0849a37f540ae2096
+  machineType: t3a.medium
+  minSize: 1
+  maxSize: 1
+  subnets:
+    - ap-south-1a
+  etcdMembers:
+  - name: main
+    instanceGroup: control-plane-ap-south-1a
+  - name: events
+    instanceGroup: control-plane-ap-south-1a
+  iam:
+    withAddonPolicies:
+      autoScaler: true
+  lifecycle: Prevent
+---
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  name: control-plane-ap-south-1b
+  labels:
+    kops.k8s.io/cluster: ounass.swapnilkhedekar.com
+spec:
+  role: Master
+  image: ami-0849a37f540ae2096
+  machineType: t3a.medium
+  minSize: 1
+  maxSize: 1
+  subnets:
+    - ap-south-1b
+  etcdMembers:
+  - name: main
+    instanceGroup: control-plane-ap-south-1b
+  - name: events
+    instanceGroup: control-plane-ap-south-1b
+  iam:
+    withAddonPolicies:
+      autoScaler: true
+  lifecycle: Prevent
+---
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  name: control-plane-ap-south-1c
+  labels:
+    kops.k8s.io/cluster: ounass.swapnilkhedekar.com
+spec:
+  role: Master
+  image: ami-0849a37f540ae2096
+  machineType: t3a.medium
+  minSize: 1
+  maxSize: 1
+  subnets:
+    - ap-south-1c
+  etcdMembers:
+  - name: main
+    instanceGroup: control-plane-ap-south-1c
+  - name: events
+    instanceGroup: control-plane-ap-south-1c
+  iam:
+    withAddonPolicies:
+      autoScaler: true
+  lifecycle: Prevent
+---
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  name: app-primary
+  labels:
+    kops.k8s.io/cluster: ounass.swapnilkhedekar.com
+spec:
+  role: Node
+  image: ami-0849a37f540ae2096
+  machineType: t3a.medium
+  minSize: 3
+  maxSize: 6
+  subnets:
+    - ap-south-1a
+    - ap-south-1b
+    - ap-south-1c
+  mixedInstancesPolicy:
+    instances:
+      - t3a.medium
+      - m5a.large
+    onDemandBase: 3
+    onDemandAboveBase: 0
+    spotInstancePools: 3
+    spotAllocationStrategy: capacity-optimized
+  iam:
+    withAddonPolicies:
+      autoScaler: true
+  lifecycle: Prevent
+---
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  name: app-spot
+  labels:
+    kops.k8s.io/cluster: ounass.swapnilkhedekar.com
+spec:
+  role: Node
+  image: ami-0849a37f540ae2096
+  machineType: t3a.medium
+  minSize: 3
+  maxSize: 9
+  mixedInstancesPolicy:
+    instances:
+    - t3a.medium
+    - t3.medium
+    - m5.large
+    - t4a.large
+    onDemandAboveBase: 0
+    onDemandBase: 0
+    spotAllocationStrategy: capacity-optimized
+  nodeLabels:
+    kops.k8s.io/instancegroup: app-spot
+  subnets:
+    - ap-south-1a
+    - ap-south-1b
+    - ap-south-1c
+  iam:
+    withAddonPolicies:
+      autoScaler: true

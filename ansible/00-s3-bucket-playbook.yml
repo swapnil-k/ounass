@@ -1,0 +1,25 @@
+---
+- name: Install and configure helm, hpa, metric-server, nginx-ingress-controller
+  hosts: localhost
+  tasks:
+    - name: Create S3 bucket for kops state
+      amazon.aws.s3_bucket:
+        name: ounass-swapnil-khedekar-com-kops-state
+        state: present
+      register: kops_bucket_result
+
+    - name: Create S3 bucket for CSV upload files
+      amazon.aws.s3_bucket:
+        name: ounass-csv-upload-files
+        state: present
+      register: csv_bucket_result
+
+    - name: Render S3 lifecycle policy to a file
+      template:
+        src: templates/s3-lifecycle-policy-glacier.json.j2
+        dest: /tmp/s3-lifecycle-policy-glacier.json
+
+    - name: Apply S3 lifecycle policy for CSV upload files
+      command: aws s3api put-bucket-lifecycle-configuration --bucket ounass-csv-upload-files --lifecycle-configuration file:///tmp/s3-lifecycle-policy-glacier.json
+      when: csv_bucket_result.changed
+

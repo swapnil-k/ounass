@@ -1,0 +1,19 @@
+---
+- name: Render Nginx config and create ConfigMap manifest
+  hosts: localhost
+  tasks:
+    - name: Render Nginx configuration to a file
+      template:
+        src: templates/nginx.conf.j2
+        dest: /tmp/nginx-conf.yaml
+
+- name: Apply the ConfigMap using Helm
+  hosts: localhost
+  tasks:
+    - name: Copy ConfigMap manifest to Helm directory
+      copy:
+        src: /tmp/nginx-conf.yaml
+        dest: ../chart/templates/configmap.yaml
+
+    - name: Deploy Helm chart
+      command: "helm upgrade --install ounass-app -n ounass-app --create-namespace ../chart --values ../chart/values.yaml"

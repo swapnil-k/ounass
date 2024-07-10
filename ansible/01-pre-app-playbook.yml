@@ -1,0 +1,31 @@
+---
+- name: Install and configure helm, hpa, metric-server, nginx-ingress-controller
+  hosts: localhost
+  tasks:
+    - name: Install Helm
+      shell: |
+        curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      args:
+        creates: /usr/local/bin/helm
+
+    - name: Add Helm repository for metrics-server
+      command: helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+
+    - name: Update Helm repositories
+      command: helm repo update
+
+    - name: Install metrics-server using Helm
+      command: helm upgrade -i -n kube-system metrics-server metrics-server/metrics-server
+
+    - name: Add Helm repository for nginx ingress
+      command: helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+
+    - name: Update Helm repositories
+      command: helm repo update
+
+    - name: Install nginx-ingress-controller using Helm
+      command: helm upgrade -i ingress-nginx ingress-nginx/ingress-nginx \
+                 --namespace ingress-nginx --create-namespace \
+                 --set controller.service.type=LoadBalancer \
+                 --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-type"="nlb"
+

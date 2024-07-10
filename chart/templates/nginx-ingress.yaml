@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.name | quote }}
+  date: "{{ now | unixEpoch }}"
+  app.kubernetes.io/managed-by: helm
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: ounass.swapnilkhedekar.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.name | quote }}
+                port:
+                  number: 80
+  tls:
+    - hosts:
+      - ounass.swapnilkhedekar.com
+      secretName: ounass-swapnilkhedekar-com-tls

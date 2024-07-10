@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.name | quote }}
+  date: "{{ now | unixEpoch }}"
+  app.kubernetes.io/managed-by: helm
+  # annotations:
+  #   service.beta.kubernetes.io/aws-load-balancer-type: "external"
+  #   service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+  #   service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:ap-south-1:353716661275:certificate/576f7ce5-0881-419f-8ead-afc4722a5393"
+  #   service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+  #   service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "HTTP"
+spec:
+  selector:
+    app: {{ .Values.name | quote }}
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
